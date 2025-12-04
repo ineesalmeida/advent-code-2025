@@ -31,6 +31,12 @@ func PrintMatrix(warehouse [][]int) {
 	}
 }
 
+func PrintMatrixStr(warehouse []string) {
+	for i := range len(warehouse) {
+		fmt.Println(string(warehouse[i]))
+	}
+}
+
 func PrintMatrixRunes(warehouse [][]rune) {
 	for i := range len(warehouse) {
 		for j := range len(warehouse[0]) {
