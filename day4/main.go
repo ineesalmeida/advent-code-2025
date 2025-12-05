@@ -95,31 +95,113 @@ func replaceAtIndex(in string, r rune, i int) string {
 	return string(out)
 }
 
-func part2(lines []string) any {
+func decreaseNeighbours(positions [][]int, i, j int, maxRows, maxCols int) {
+	// Decrease positions of the 8 nearby by 1
+	if i > 0 {
+		if j > 0 {
+			positions[i-1][j-1] -= 1
+		}
+		positions[i-1][j] -= 1
+		if j < maxCols-1 {
+			positions[i-1][j+1] -= 1
+		}
+	}
 
+	if j > 0 {
+		positions[i][j-1] -= 1
+	}
+	if j < maxCols-1 {
+		positions[i][j+1] -= 1
+	}
+
+	if i < maxRows-1 {
+		if j > 0 {
+			positions[i+1][j-1] -= 1
+		}
+		positions[i+1][j] -= 1
+		if j < maxCols-1 {
+			positions[i+1][j+1] -= 1
+		}
+	}
+}
+
+func part2(lines []string) any {
+	// Build position matrix once
+	positions := startMatrix(lines)
+	countNeighbourBoxes(lines, positions)
+
+	maxRows := len(lines)
+	maxCols := len(lines[0])
 	result := 0
 
-	for true {
-		positions := startMatrix(lines)
-		countNeighbourBoxes(lines, positions)
+	// Use a queue to track boxes to check
+	type coord struct {
+		i, j int
+	}
+	toCheck := make([]coord, 0, maxRows*maxCols)
 
-		// utils.PrintMatrixStr(lines)
-
-		// Remove boxes
-		count := 0
-		for i, line := range positions {
-			for j, col := range line {
-				if col < 4 && lines[i][j] == '@' {
-					lines[i] = replaceAtIndex(lines[i], '.', j)
-					count += 1
-				}
+	// Initially add all boxes with < 4 neighbors
+	for i := 0; i < maxRows; i++ {
+		for j := 0; j < maxCols; j++ {
+			if lines[i][j] == '@' && positions[i][j] < 4 {
+				toCheck = append(toCheck, coord{i, j})
 			}
 		}
-		if count == 0 {
-			break
+	}
+
+	// Process queue
+	for len(toCheck) > 0 {
+		c := toCheck[0]
+		toCheck = toCheck[1:]
+
+		// Check if still valid (might have been removed already)
+		if lines[c.i][c.j] != '@' {
+			continue
 		}
 
-		result += count
+		// Check if still has < 4 neighbors
+		if positions[c.i][c.j] >= 4 {
+			continue
+		}
+
+		// Remove this box
+		lines[c.i] = replaceAtIndex(lines[c.i], '.', c.j)
+		result++
+
+		// Decrease neighbor counts and add neighbors that might now qualify
+		neighbors := []coord{}
+		if c.i > 0 {
+			if c.j > 0 {
+				neighbors = append(neighbors, coord{c.i - 1, c.j - 1})
+			}
+			neighbors = append(neighbors, coord{c.i - 1, c.j})
+			if c.j < maxCols-1 {
+				neighbors = append(neighbors, coord{c.i - 1, c.j + 1})
+			}
+		}
+		if c.j > 0 {
+			neighbors = append(neighbors, coord{c.i, c.j - 1})
+		}
+		if c.j < maxCols-1 {
+			neighbors = append(neighbors, coord{c.i, c.j + 1})
+		}
+		if c.i < maxRows-1 {
+			if c.j > 0 {
+				neighbors = append(neighbors, coord{c.i + 1, c.j - 1})
+			}
+			neighbors = append(neighbors, coord{c.i + 1, c.j})
+			if c.j < maxCols-1 {
+				neighbors = append(neighbors, coord{c.i + 1, c.j + 1})
+			}
+		}
+
+		for _, n := range neighbors {
+			positions[n.i][n.j]--
+			// If this neighbor is a box and now has < 4 neighbors, add to queue
+			if lines[n.i][n.j] == '@' && positions[n.i][n.j] < 4 {
+				toCheck = append(toCheck, n)
+			}
+		}
 	}
 
 	return result
