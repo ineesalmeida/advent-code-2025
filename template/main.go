@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	lines, err := utils.FileToLines("input.txt")
+	lines, err := utils.FileToLines("test-input.txt")
 	if err != nil {
 		log.Fatalf("[!] %s\n", err)
 	}
